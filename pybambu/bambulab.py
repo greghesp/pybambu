@@ -8,8 +8,6 @@ import logging
 from dataclasses import dataclass
 from paho.mqtt import client as mqtt_client
 
-
-
 from .models import Device
 
 from .exceptions import (
