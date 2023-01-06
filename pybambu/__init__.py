@@ -6,4 +6,4 @@ from .exceptions import (
     BambuLabError,
     BambuLabUnsupportedFeature,
 )
-from .models import Bed
+from .models import Sensors
