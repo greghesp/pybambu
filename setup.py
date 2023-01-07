@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pybambu",
-    version="0.0.2",
+    version="0.0.3",
     author="Greg Hesp",
     author_email="greg.hesp+pybambulab@gmail.com",
     description="A python library to connect to the Bambu Lab X1C over MQTT",

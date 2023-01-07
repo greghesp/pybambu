@@ -71,7 +71,6 @@ class File:
         self.gcode_file = data["print"].get("gcode_file", self.gcode_file)
 
 
-
 class Device:
     def __init__(self, data):
         self.sensors = Sensors.from_dict(data)
