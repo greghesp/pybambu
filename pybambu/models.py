@@ -55,7 +55,7 @@ class Device:
         self.external_spool.print_update(data)
         self.hms.print_update(data)
         self.camera.print_update(data)
-        self.home_flag.print_update(data=data, info=self.info)
+        self.home_flag.print_update(data=data)
         if self.client.callback is not None:
             self.client.callback("event_printer_data_update")
 
@@ -66,6 +66,7 @@ class Device:
     def info_update(self, data):
         """Update from dict"""
         self.info.info_update(data)
+        self.home_flag.info_update(info=self.info)
         self.ams.info_update(data)
         if data.get("command") == "get_version":
             self.get_version_data = data
@@ -862,9 +863,11 @@ class HomeFlag:
         self.device_type = device_type
         self.sw_ver = "unknown"
 
-    def print_update(self, data: dict, info: Info = None):
+    def info_update(self, info: Info = None):
         if info is not None:
             self.sw_ver = info.sw_ver
+
+    def print_update(self, data: dict):
         if "homeflag" in data:
             value = int(data.get("homeflag"))
             if value != self.value:
