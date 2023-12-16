@@ -6,7 +6,6 @@ from pybambu import BambuClient
 
 logging.basicConfig(level=logging.DEBUG)
 
-
 def new_update(device):
     print(device.__dict__)
 
