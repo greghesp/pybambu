@@ -3,6 +3,8 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+required = ["paho-mqtt", "packaging"]
+
 setuptools.setup(
     name="pybambu",
     version="1.0.0",
@@ -12,7 +14,8 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/greghesp/pybambu",
-    REQUIRED=["paho-mqtt"],
+    install_requires=required,
+    REQUIRED=required,
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",

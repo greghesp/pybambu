@@ -19,7 +19,8 @@ class Features(Enum):
     AMS_TEMPERATURE = 11,
     CAMERA_RTSP = 13,
     START_TIME_GENERATED = 14,
-    CAMERA_IMAGE = 15
+    CAMERA_IMAGE = 15,
+    DOOR_SENSOR = 16
 
 
 class FansEnum(Enum):
@@ -52,6 +53,20 @@ ACTION_IDS = {
     19: "calibrating_extrusion_flow",
     20: "paused_nozzle_temperature_malfunction",
     21: "paused_heat_bed_temperature_malfunction",
+    22: "filament unloading",
+    23: "paused_skipped_step",
+    24: "filament_loading",
+    25: "calibrating_motor_noise",
+    26: "paused_ams_lost",
+    27: "paused_low_fan_speed_heat_break",
+    28: "paused_chamber_temperature_control_error",
+    29: "cooling_chamber",
+    30: "paused_user_gcode",
+    31: "motor_noise_showoff",
+    32: "paused_nozzle_filament_covered_detected",
+    33: "paused_cutter_error",
+    34: "paused_first_layer_error",
+    35: "paused_nozzle_clog",
     # X1 returns -1 for idle
     -1: "idle",
     # P1 returns 255 for idle
@@ -115,6 +130,10 @@ FILAMENT_NAMES = {
     "GFL03": "eSUN PLA+",
     "GFSL99_01": "Generic PLA Silk",
     "GFSL99_12": "Generic PLA Silk",
+    "GFA12": "Bambu PLA Glow",
+    "GFT97": "Generic PPS",
+    "GFT98": "Generic PPS-CF",
+    "GFU00": "Bambu TPU 95A HF",
 }
 
 HMS_ERRORS = {

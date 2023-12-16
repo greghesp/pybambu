@@ -3,6 +3,8 @@ import math
 from dataclasses import dataclass
 from datetime import datetime
 
+from packaging import version
+
 from .utils import \
     search, \
     fan_percentage, \
@@ -25,20 +27,21 @@ class Device:
     def __init__(self, client, device_type, serial):
         self.client = client
         self.temperature = Temperature()
-        self.lights = Lights(client)
-        self.info = Info(client, device_type, serial)
-        self.fans = Fans(client)
-        self.speed = Speed(client)
+        self.lights = Lights(client=client)
+        self.info = Info(client=client, device_type=device_type, serial=serial)
+        self.fans = Fans(client=client)
+        self.speed = Speed(client=client)
         self.stage = StageAction()
-        self.ams = AMSList(client)
-        self.external_spool = ExternalSpool(client)
-        self.hms = HMSList(client)
+        self.ams = AMSList(client=client)
+        self.external_spool = ExternalSpool(client=client)
+        self.hms = HMSList(client=client)
         self.camera = Camera()
+        self.home_flag = HomeFlag(client=client, device_type=device_type)
         self._active_tray = None
         self.push_all_data = None
         self.get_version_data = None
-        if self.supports_feature(Features.CAMERA_IMAGE):
-            self.p1p_camera = P1PCamera(client)
+        if self.supports_feature(feature=Features.CAMERA_IMAGE):
+            self.p1p_camera = P1PCamera(client=client)
 
     def print_update(self, data):
         """Update from dict"""
@@ -52,9 +55,12 @@ class Device:
         self.external_spool.print_update(data)
         self.hms.print_update(data)
         self.camera.print_update(data)
+        self.home_flag.print_update(data=data, info=self.info)
         if self.client.callback is not None:
             self.client.callback("event_printer_data_update")
-        if data.get("msg") == 0:
+
+        # msg no longer exists in new X1 firmware 01.07.00.00
+        if ("msg" in data and data.get("msg") == 0) or len(data.keys()) >= 50:
             self.push_all_data = data
 
     def info_update(self, data):
@@ -95,6 +101,8 @@ class Device:
             case Features.CAMERA_IMAGE:
                 return (self.client.host != "us.mqtt.bambulab.com") and (
                             self.info.device_type == "P1P" or self.info.device_type == "P1S" or self.info.device_type == "A1" or self.info.device_type == "A1Mini")
+            case Features.DOOR_SENSOR:
+                return self.home_flag.door in ["open", "closed"]
         return False
 
     def get_active_tray(self):
@@ -803,6 +811,7 @@ class HMSList:
         # So this is HMS_0300_0100_0001_0007:
         # https://wiki.bambulab.com/en/x1/troubleshooting/hmscode/0300_0100_0001_0007
         # 'The heatbed temperature is abnormal; the sensor may have an open circuit.'
+        # Full list available at: https://e.bambulab.com/query.php?lang=en
 
         if 'hms' in data.keys():
             hmsList = data.get('hms', [])
@@ -841,3 +850,98 @@ class P1PCamera:
 
     def get_jpeg(self) -> bytearray:
         return self._bytes
+
+
+@dataclass
+class HomeFlag:
+    """Contains parsed values from the homeflag sensor"""
+
+    def __init__(self, client, device_type: str):
+        self.value = 0
+        self.client = client
+        self.device_type = device_type
+        self.sw_ver = "unknown"
+
+    def print_update(self, data: dict, info: Info = None):
+        if info is not None:
+            self.sw_ver = info.sw_ver
+        if "homeflag" in data:
+            value = int(data.get("homeflag"))
+            if value != self.value:
+                self.value = value
+                if self.client.callback is not None:
+                    self.client.callback("event_homeflag_update")
+
+    @property
+    def door(self):
+        if not self.device_type.startswith("X1"):
+            # we do not know if P1S has the sensor
+            return "none"
+
+        elif (self.sw_ver == "unknown" or
+              (self.device_type.startswith("X1") and version.parse(self.sw_ver) < version.parse("01.07.00.00"))):
+            return "unknown"
+
+        return "open" if ((self.value >> 23) & 0x1) == 1 else "closed"
+
+    @property
+    def x_axis(self):
+        return "homed" if (self.value & 0x01) == 1 else "not homed"
+
+    @property
+    def y_axis(self):
+        return "homed" if ((self.value >> 1) & 0x01) == 1 else "not homed"
+
+    @property
+    def z_axis(self):
+        return "homed" if ((self.value >> 2) & 0x01) == 1 else "not homed"
+
+    @property
+    def homed(self):
+        return self.x_axis == "homed" and self.y_axis == "homed" and self.z_axis == "homed"
+
+    @property
+    def voltage_setting(self):
+        return "220v" if ((self.value >> 3) & 0x01) == 1 else "110v"
+
+    @property
+    def xcam_autorecovery_steploss(self):
+        return "enabled" if ((self.value >> 4) & 0x01) == 1 else "disabled"
+
+    @property
+    def camera_recording(self):
+        return "enabled" if ((self.value >> 5) & 0x01) == 1 else "disabled"
+
+    @property
+    def ams_calibrate_remaining(self):
+        return "enabled" if ((self.value >> 7) & 0x01) == 1 else "disabled"
+
+    @property
+    def sdcard_state(self):
+        value = (self.value >> 8) & 0x01
+        if value == 0:
+            return "none"
+        elif value == 1:
+            return "present"
+        elif value == 2:
+            return "abnormal"
+        else:
+            return "other"
+
+    @property
+    def ams_auto_switch_filament(self):
+        return "enabled" if ((self.value >> 10) & 0x01) == 1 else "disabled"
+
+    @property
+    def network_connection(self):
+        return "wired" if ((self.value >> 18) & 0x01) == 1 else "wireless"
+
+    @property
+    def xcam_prompt_sound(self):
+        return "enabled" if ((self.value >> 17) & 0x01) == 1 else "disabled"
+
+    @property
+    def supports_motor_noise_calibration(self):
+        return ((self.value >> 21) & 0x01) == 1
+
+
