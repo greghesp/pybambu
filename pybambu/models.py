@@ -882,7 +882,8 @@ class HomeFlag:
             return "none"
 
         elif (self.sw_ver == "unknown" or
-              (self.device_type.startswith("X1") and version.parse(self.sw_ver) < version.parse("01.07.00.00"))):
+                # X1E has different firmware versioning than X1/X1C
+              (self.device_type in ["X1", "X1C"] and version.parse(self.sw_ver) < version.parse("01.07.00.00"))):
             return "unknown"
 
         return "open" if ((self.value >> 23) & 0x1) == 1 else "closed"
