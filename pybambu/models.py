@@ -65,35 +65,34 @@ class Device:
             self.get_version_data = data
 
     def supports_feature(self, feature):
-        match feature:
-            case Features.AUX_FAN:
-                return True
-            case Features.CHAMBER_LIGHT:
-                return True
-            case Features.CHAMBER_FAN:
-                return self.info.device_type == "X1" or self.info.device_type == "X1C" or self.info.device_type == "P1P" or self.info.device_type == "P1S"
-            case Features.CHAMBER_TEMPERATURE:
-                return self.info.device_type == "X1" or self.info.device_type == "X1C"
-            case Features.CURRENT_STAGE:
-                return True
-            case Features.PRINT_LAYERS:
-                return True
-            case Features.AMS:
-                return len(self.ams.data) != 0
-            case Features.EXTERNAL_SPOOL:
-                return True
-            case Features.K_VALUE:
-                return self.info.device_type == "P1P" or self.info.device_type == "P1S" or self.info.device_type == "A1" or self.info.device_type == "A1Mini"
-            case Features.START_TIME:
-                return self.info.device_type == "X1" or self.info.device_type == "X1C"
-            case Features.START_TIME_GENERATED:
-                return self.info.device_type == "P1P" or self.info.device_type == "P1S" or self.info.device_type == "A1" or self.info.device_type == "A1Mini"
-            case Features.AMS_TEMPERATURE:
-                return self.info.device_type == "X1" or self.info.device_type == "X1C"
-            case Features.CAMERA_RTSP:
-                return self.info.device_type == "X1" or self.info.device_type == "X1C"
-            case Features.CAMERA_IMAGE:
-                return (self.client.host != "us.mqtt.bambulab.com") and (
+        if feature == Features.AUX_FAN:
+            return True
+        elif feature == Features.CHAMBER_LIGHT:
+            return True
+        elif feature == Features.CHAMBER_FAN:
+            return self.info.device_type == "X1" or self.info.device_type == "X1C" or self.info.device_type == "P1P" or self.info.device_type == "P1S"
+        elif feature == Features.CHAMBER_TEMPERATURE:
+            return self.info.device_type == "X1" or self.info.device_type == "X1C"
+        elif feature == Features.CURRENT_STAGE:
+            return True
+        elif feature == Features.PRINT_LAYERS:
+            return True
+        elif feature == Features.AMS:
+            return len(self.ams.data) != 0
+        elif feature == Features.EXTERNAL_SPOOL:
+            return True
+        elif feature == Features.K_VALUE:
+            return self.info.device_type == "P1P" or self.info.device_type == "P1S" or self.info.device_type == "A1" or self.info.device_type == "A1Mini"
+        elif feature == Features.START_TIME:
+            return self.info.device_type == "X1" or self.info.device_type == "X1C"
+        elif feature == Features.START_TIME_GENERATED:
+            return self.info.device_type == "P1P" or self.info.device_type == "P1S" or self.info.device_type == "A1" or self.info.device_type == "A1Mini"
+        elif feature == Features.AMS_TEMPERATURE:
+            return self.info.device_type == "X1" or self.info.device_type == "X1C"
+        elif feature == Features.CAMERA_RTSP:
+            return self.info.device_type == "X1" or self.info.device_type == "X1C"
+        elif feature == Features.CAMERA_IMAGE:
+            return (self.client.host != "us.mqtt.bambulab.com") and (
                             self.info.device_type == "P1P" or self.info.device_type == "P1S" or self.info.device_type == "A1" or self.info.device_type == "A1Mini")
         return False
 
