@@ -1068,8 +1068,8 @@ class HMSList:
             index: int = 0
             for hms in hmsList:
                 index = index + 1
-                attr = hms['attr']
-                code = hms['code']
+                attr = int(hms['attr'])
+                code = int(hms['code'])
                 hms_notif = HMSNotification(attr=attr, code=code)
                 errors[f"{index}-Error"] = f"HMS_{hms_notif.hms_code}: {get_HMS_error_text(hms_notif.hms_code)}"
                 errors[f"{index}-Wiki"] = hms_notif.wiki_url
