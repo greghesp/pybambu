@@ -1,7 +1,8 @@
 import math
 from datetime import datetime, timedelta
 
-from .const import ACTION_IDS, SPEED_PROFILE, FILAMENT_NAMES, HMS_ERRORS, HMS_AMS_ERRORS, LOGGER, FansEnum
+from .const import (ACTION_IDS, SPEED_PROFILE, FILAMENT_NAMES, HMS_ERRORS, HMS_AMS_ERRORS, LOGGER, FansEnum,
+                    HMS_SEVERITY_LEVELS, HMS_MODULES)
 from .commands import SEND_GCODE_TEMPLATE
 
 
@@ -75,6 +76,21 @@ def get_HMS_error_text(hms_code: str):
         return ams_error
 
     return HMS_ERRORS.get(hms_code, "unknown")
+
+
+def get_HMS_severity(code: int) -> str:
+    uint_code = code >> 16
+    if code > 0 and uint_code in HMS_SEVERITY_LEVELS:
+        return HMS_SEVERITY_LEVELS[uint_code]
+    return HMS_SEVERITY_LEVELS["default"]
+
+
+def get_HMS_module(attr: int) -> str:
+    uint_attr = (attr >> 24) & 0xFF
+    if attr > 0 and uint_attr in HMS_MODULES:
+        return HMS_MODULES[uint_attr]
+    return HMS_MODULES["default"]
+
 
 def get_generic_AMS_HMS_error_code(hms_code: str):
     code1 = int(hms_code[0:4], 16)
