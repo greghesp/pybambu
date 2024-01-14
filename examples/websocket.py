@@ -6,6 +6,7 @@ from pybambu import BambuClient
 
 logging.basicConfig(level=logging.DEBUG)
 
+
 def new_update(device):
     print(device.__dict__)
 
@@ -30,8 +31,23 @@ async def new_main(argv):
                         serial=serial,
                         host=host,
                         username="bblp",
-                        access_code=access_code)
-    await bambu.try_connection()
+                        access_code=access_code,
+                        local_mqtt=True,
+                        region=None,
+                        email=None,
+                        auth_token=None
+                        )
+    success = await bambu.try_connection()
+    if success:
+        print("Starting MQTT")
+
+        def event_handler(event):
+            device_instance = bambu.get_device()
+            print('event:', device_instance, event)
+
+        bambu.connect(callback=event_handler)
+    else:
+        print("Connection failed")
 
 
 if __name__ == "__main__":
