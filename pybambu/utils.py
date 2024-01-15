@@ -1,8 +1,17 @@
 import math
 from datetime import datetime, timedelta
 
-from .const import (ACTION_IDS, SPEED_PROFILE, FILAMENT_NAMES, HMS_ERRORS, HMS_AMS_ERRORS, LOGGER, FansEnum,
-                    HMS_SEVERITY_LEVELS, HMS_MODULES)
+from .const import (
+    CURRENT_STAGE_IDS,
+    SPEED_PROFILE,
+    FILAMENT_NAMES,
+    HMS_ERRORS,
+    HMS_AMS_ERRORS,
+    HMS_SEVERITY_LEVELS,
+    HMS_MODULES,
+    LOGGER,
+    FansEnum,
+)
 from .commands import SEND_GCODE_TEMPLATE
 
 
@@ -52,14 +61,14 @@ def get_filament_name(idx):
     return result
 
 
-def get_speed_name(_id):
+def get_speed_name(id):
     """Return the human-readable name for a speed id"""
-    return SPEED_PROFILE.get(int(_id), "standard")
+    return SPEED_PROFILE.get(int(id), "standard")
 
 
-def get_stage_action(_id):
+def get_current_stage(id) -> str:
     """Return the human-readable description for a stage action"""
-    return ACTION_IDS.get(_id, "unknown")
+    return CURRENT_STAGE_IDS.get(int(id), "unknown")
 
 
 def get_HMS_error_text(hms_code: str):
@@ -122,10 +131,11 @@ def get_printer_type(modules, default):
         if esp32.get("hw_ver") == "AP05":
             if esp32.get("project_name") == "N1":
                 LOGGER.debug("Device is A1 Mini")
-                return "A1Mini"
+                return "A1MINI"
             elif esp32.get("project_name") == "N2S":
                 LOGGER.debug("Device is A1")
                 return "A1"
+        LOGGER.debug(f"UNKNOWN DEVICE: esp32 = {esp32.get('hw_ver')}/'{esp32.get('project_name')}'")
     elif len(rv1126.keys()) > 1:
         if rv1126.get("hw_ver") == "AP05":
             LOGGER.debug("Device is X1C")
@@ -133,6 +143,7 @@ def get_printer_type(modules, default):
         elif rv1126.get("hw_ver") == "AP02":
             LOGGER.debug("Device is X1E")
             return "X1E"
+        LOGGER.debug(f"UNKNOWN DEVICE: rv1126 = {rv1126.get('hw_ver')}")
     return default
 
 
