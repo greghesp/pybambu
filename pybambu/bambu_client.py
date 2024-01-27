@@ -16,7 +16,10 @@ from typing import Any
 import paho.mqtt.client as mqtt
 
 from .bambu_cloud import BambuCloud
-from .const import LOGGER, Features
+from .const import (
+    LOGGER,
+    Features,
+)
 from .models import Device
 from .commands import (
     GET_VERSION,
@@ -133,6 +136,9 @@ class ChamberImageThread(threading.Thread):
                             LOGGER.error(f"{self._client._device.info.device_type}: Socket error: {status}")
                     except socket.error as e:
                         LOGGER.error(f"{self._client._device.info.device_type}: Socket error: {e}")
+                        # Sleep to allow printer to stabilize during boot when it may fail these connection attempts repeatedly.
+                        time.sleep(1)
+                        continue
 
                     sslSock.setblocking(False)
                     while not self._stop_event.is_set():
@@ -248,9 +254,10 @@ class BambuClient:
     """Initialize Bambu Client to connect to MQTT Broker"""
     _watchdog = None
     _camera = None
+    _usage_hours: float
 
     def __init__(self, device_type: str, serial: str, host: str, local_mqtt: bool, region: str, email: str,
-                 username: str, auth_token: str, access_code: str):
+                 username: str, auth_token: str, access_code: str, usage_hours: float = 0):
         self.callback = None
         self.host = host
         self._local_mqtt = local_mqtt
@@ -260,10 +267,11 @@ class BambuClient:
         self._username = username
         self._connected = False
         self._device_type = device_type
-        self._device = Device(self)
+        self._usage_hours = usage_hours
         self._port = 1883
         self._refreshed = False
         self._manual_refresh_mode = False
+        self._device = Device(self)
         self.bambu_cloud = BambuCloud(region, email, username, auth_token)
 
     @property
@@ -323,6 +331,9 @@ class BambuClient:
                    properties: mqtt.Properties | None = None, ):
         """Handle connection"""
         LOGGER.info("On Connect: Connected to Broker")
+        self._on_connect()
+
+    def _on_connect(self):
         self._connected = True
         self.subscribe_and_request_info()
 
@@ -356,6 +367,9 @@ class BambuClient:
                       result_code: int):
         """Called when MQTT Disconnects"""
         LOGGER.warn(f"On Disconnect: Disconnected from Broker: {result_code}")
+        self._on_disconnect()
+    
+    def _on_disconnect(self):
         self._connected = False
         self._device.info.set_online(False)
         if self._watchdog is not None:
@@ -389,12 +403,11 @@ class BambuClient:
                 # device has connected/disconnected (e.g. turned on/off)
                 if json_data.get("event").get("event") == "client.connected":
                     LOGGER.debug("Client connected event received.")
-                    self._device.info.set_online(True)
-                    self.subscribe_and_request_info()
-                    self._watchdog.received_data()
+                    self._on_disconnect() # We aren't guaranteed to recieve a client.disconnected event.
+                    self._on_connect()
                 elif json_data.get("event").get("event") == "client.disconnected":
                     LOGGER.debug("Client disconnected event received.")
-                    self._device.info.set_online(False)
+                    self._on_disconnect()
             else:
                 self._device.info.set_online(True)
                 self._watchdog.received_data()
